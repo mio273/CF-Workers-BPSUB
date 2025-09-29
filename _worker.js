@@ -59,16 +59,17 @@ export default {
                 subConverter = subConverter.split("//")[1] || subConverter;
             }
             subConfig = url.searchParams.get('subconfig') || subConfig;
+            const trojan = url.searchParams.get('trojan') || false;
             const uuid = url.searchParams.get('uuid') || env.UUID;
             const uuid_json = await getLocalData(bphost, uuid);
-
+            const xhttp = url.searchParams.get('xhttp') || false;
             let 最终路径 = url.searchParams.has('proxyip') ? `/snippets/ip=${url.searchParams.get('proxyip')}` : (proxyIP && proxyIP.trim() !== '') ? `/snippets/ip=${encodeURIComponent(proxyIP)}` : `/snippets`;
             let socks5 = null;
             const 全局socks5 = (url.searchParams.has('global')) ? true : false;
             if (url.searchParams.has('socks5') && url.searchParams.get('socks5') != '') {
                 socks5 = url.searchParams.get('socks5');
                 最终路径 = 全局socks5 ? `/snippets/gs5=${socks5}` : `/snippets/s5=${socks5}`;
-            } else if (url.searchParams.has('http') && url.searchParams.get('http') == '') {
+            } else if (url.searchParams.has('http') && url.searchParams.get('http') != '') {
                 socks5 = url.searchParams.get('http');
                 最终路径 = 全局socks5 ? `/http://${socks5}` : `/http=${socks5}`;
             }
@@ -89,8 +90,8 @@ export default {
                 const selected = uuid_json[randomIndex];
                 const uuid = selected.uuid;
                 const 伪装域名 = selected.host;
-
-                let subConverterUrl = `https://${优选订阅生成器}/sub?uuid=${uuid}&host=${伪装域名}&&path=${encodeURIComponent(最终路径)}`;
+                const 验证字段名 = trojan ? 'password' : 'uuid';
+                let subConverterUrl = `https://${优选订阅生成器}/sub?${验证字段名}=${uuid}&host=${伪装域名}&path=${encodeURIComponent(最终路径)}`;
                 if (需要订阅转换的UA.some(ua => userAgent.includes(ua)) &&
                     !userAgent.includes(('CF-Workers-SUB').toLowerCase()) &&
                     !isSubConverterRequest) {
@@ -298,9 +299,16 @@ export default {
                         const selected = uuid_json[randomIndex];
                         const uuid = selected.uuid;
                         const 伪装域名 = selected.host;
-
-                        const 为烈士Link = 'vl' + 'es' + `s://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '')}&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}&encryption=none#${encodeURIComponent(addressid + 节点备注)}`;
-                        return 为烈士Link;
+                        if (trojan) {
+                            const 木马Link = 'tr' + 'oj' + `an://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '')}&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}#${encodeURIComponent(addressid + 节点备注)}`
+                            return 木马Link;
+                        } else {
+                            const 为烈士Link = 'vl' + 'es' + `s://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=ws&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '')}&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}&encryption=none#${encodeURIComponent(addressid + 节点备注)}`;
+                            if (xhttp) {
+                                const xhttpLink = 'vl' + 'es' + `s://${uuid}@${address}:${port}?security=tls&sni=${伪装域名}&type=xhttp&host=${伪装域名}&path=${encodeURIComponent(最终路径) + (跳过证书验证 ? '&allowInsecure=1' : '')}&mode=stream-one&fragment=${encodeURIComponent('1,40-60,30-50,tlshello')}&encryption=none#${encodeURIComponent(addressid + 节点备注 + '-XHTTP')}`;
+                                return 为烈士Link + '\n' + xhttpLink;
+                            } else return 为烈士Link;
+                        }
                     }
                 }).join('\n');
 
@@ -346,27 +354,6 @@ export default {
                 });
             } catch (error) {
                 return new Response('下载失败: ' + error.message, {
-                    status: 500,
-                    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-                });
-            }
-        } else if (url.pathname === '/proxy_host.js') {
-            // 代理主机Worker代码获取
-            try {
-                const jsResponse = await fetch('https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/proxy_host/_worker.js');
-                if (!jsResponse.ok) {
-                    throw new Error('获取代码失败');
-                }
-
-                const jsCode = await jsResponse.text();
-                return new Response(jsCode, {
-                    headers: {
-                        'Content-Type': 'text/plain; charset=utf-8',
-                        'Cache-Control': 'public, max-age=300' // 5分钟缓存，保证及时更新
-                    }
-                });
-            } catch (error) {
-                return new Response('获取代码失败: ' + error.message, {
                     status: 500,
                     headers: { 'Content-Type': 'text/plain; charset=utf-8' }
                 });
@@ -544,6 +531,7 @@ async function subHtml(request, hostLength = hosts.length) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@keeex/qrcodejs-kx@1.0.2/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.11.1/src/sha256.min.js"></script>
     <style>
         :root {
             --primary-color: #00ffff;
@@ -1270,6 +1258,16 @@ async function subHtml(request, hostLength = hosts.length) {
             background: rgba(0, 255, 255, 0.1);
         }
         
+        .radio-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .radio-option.disabled .radio-label {
+            color: #666;
+        }
+        
         .radio-option input[type="radio"] {
             margin-right: 10px;
             width: 18px;
@@ -1384,21 +1382,6 @@ async function subHtml(request, hostLength = hosts.length) {
             min-height: 24px;
             max-height: 24px;
             overflow: hidden;
-        }
-        
-        .socks5-header label[for="socks5"] {
-            margin-bottom: 0;
-            flex-shrink: 0;
-            user-select: text;
-            position: relative;
-            z-index: 10;
-            font-size: 1em;
-            display: flex;
-            align-items: center;
-            height: 24px;
-            min-height: 24px;
-            align-self: center;
-            line-height: 1;
         }
         
         /* 行内复选框样式 */
@@ -1588,11 +1571,6 @@ async function subHtml(request, hostLength = hosts.length) {
                 max-height: none;
             }
             
-            .socks5-header label[for="socks5"] {
-                align-self: center;
-                margin-bottom: 5px;
-            }
-            
             .checkbox-option-inline {
                 align-self: center;
                 margin-top: 5px;
@@ -1751,6 +1729,8 @@ async function subHtml(request, hostLength = hosts.length) {
                                         <option value="v" selected>🎯 白嫖哥源码</option>
                                         <option value="t12">📘 天书12源码</option>
                                         <option value="t13">📗 天书13源码(不支持ios客户端、ed配置)</option>
+                                        <option value="my">🔥 ymyuuu源码(支持xhttp协议)</option>
+                                        <option value="ca110us">🎠 ca110us源码(trojan协议)</option>
                                     </select>
                                 </div>
 
@@ -1889,12 +1869,20 @@ async function subHtml(request, hostLength = hosts.length) {
                                 <input type="radio" name="proxyMode" value="socks5" onchange="toggleProxyMode()">
                                 <span class="radio-label">🔒 Socks5 代理</span>
                             </label>
+                            <label class="radio-option">
+                                <input type="radio" name="proxyMode" value="http" onchange="toggleProxyMode()">
+                                <span class="radio-label">📡 HTTP 代理</span>
+                            </label>
                         </div>
                     </div>
                     
                     <!-- ProxyIP 输入框 -->
                     <div class="form-group" id="proxyip-group">
-                        <label for="proxyip">ProxyIP地址：</label>
+                        <!-- 标题行：ProxyIP地址 -->
+                        <div class="socks5-header">
+                            <label for="proxyip">ProxyIP地址：</label>
+                            <span></span>
+                        </div>
                         <input type="text" id="proxyip" placeholder="proxyip.fxxk.dedyn.io:443" value="">
                     </div>
                     
@@ -1909,6 +1897,19 @@ async function subHtml(request, hostLength = hosts.length) {
                             </label>
                         </div>
                         <input type="text" id="socks5" placeholder="user:password@127.0.0.1:1080 或 127.0.0.1:1080" value="">
+                    </div>
+                    
+                    <!-- HTTP 输入框 -->
+                    <div class="form-group" id="http-group" style="display: none;">
+                        <!-- 标题行：HTTP代理 + 全局代理选项 -->
+                        <div class="socks5-header">
+                            <label for="http">HTTP代理：</label>
+                            <label class="checkbox-option-inline" for="globalHttp">
+                                <input type="checkbox" id="globalHttp">
+                                <span class="checkbox-label-inline">🌍 启用全局代理</span>
+                            </label>
+                        </div>
+                        <input type="text" id="http" placeholder="user:password@127.0.0.1:8080 或 127.0.0.1:8080" value="">
                     </div>
                     
                     <!-- ProxyIP 详细说明 -->
@@ -1962,7 +1963,7 @@ async function subHtml(request, hostLength = hosts.length) {
                 <div class="section-content">
                     <div class="form-group">
                         <label for="subapi">订阅转换后端：</label>
-                        <input type="text" id="subapi" placeholder="${subProtocol}://${subConverter}" value="">
+                        <input type="text" id="subapi" placeholder="${subProtocol}://${subConverter.toLowerCase()}" value="">
                         <div class="example">🔄 用于将生成的VLESS链接转换为Clash/SingBox等格式的后端服务
                         </div>
                     </div>
@@ -1976,8 +1977,8 @@ async function subHtml(request, hostLength = hosts.length) {
             </div>
             
             <!-- 高级参数设置 -->
-            <div class="section">
-                <div class="section-title">🔧 高级参数设置</div>
+            <div class="section collapsible">
+                <div class="section-title" onclick="toggleSection(this)">🔧 节点高级设置</div>
                 <div class="section-content">
                     <div class="form-group">
                         <label style="margin-bottom: 15px;">高级参数选项：</label>
@@ -1993,8 +1994,10 @@ async function subHtml(request, hostLength = hosts.length) {
                         </div>
                         <div class="example">⚙️ 高级参数说明：
 • ed=2560：启用0-RTT
-• scv：跳过TLS证书验证，适用于自签名证书场景
-• 注意：天书13源码不支持ed参数配置
+• scv：跳过TLS证书验证，适用于双向解析的免费域名
+• xhttp：使用XHTTP协议必须保证域名开启gRPC支持
+• trojan：使用trojan协议并开启验证UUID的话，要求在当前页面填写正确的UUID后再点击复制源码
+• 天书13：不支持ed参数配置
                         </div>
                     </div>
                 </div>
@@ -2045,6 +2048,7 @@ async function subHtml(request, hostLength = hosts.length) {
                 proxyHost: document.getElementById('proxyHost').value,
                 proxyip: document.getElementById('proxyip').value,
                 socks5: document.getElementById('socks5').value,
+                http: document.getElementById('http').value,
                 subapi: document.getElementById('subapi').value,
                 subconfig: document.getElementById('subconfig').value,
                 snippetUuid: document.getElementById('snippetUuid') ? document.getElementById('snippetUuid').value : '',
@@ -2052,9 +2056,12 @@ async function subHtml(request, hostLength = hosts.length) {
                 ipMode: document.querySelector('input[name="ipMode"]:checked')?.value || 'custom',
                 snippetSource: document.getElementById('snippetSourceSelect')?.value || 'v',
                 globalSocks5: document.getElementById('globalSocks5').checked,
+                globalHttp: document.getElementById('globalHttp').checked,
                 enableEd: document.getElementById('enableEd') ? document.getElementById('enableEd').checked : false,
                 skipCertVerify: document.getElementById('skipCertVerify') ? document.getElementById('skipCertVerify').checked : false,
                 activeTab: currentTab, // 保存当前选中的选项卡
+                // 保存所有可折叠section的状态
+                sectionStates: getSectionStates(),
                 timestamp: Date.now()
             };
             
@@ -2084,6 +2091,7 @@ async function subHtml(request, hostLength = hosts.length) {
                 if (formData.proxyHost) document.getElementById('proxyHost').value = formData.proxyHost;
                 if (formData.proxyip) document.getElementById('proxyip').value = formData.proxyip;
                 if (formData.socks5) document.getElementById('socks5').value = formData.socks5;
+                if (formData.http) document.getElementById('http').value = formData.http;
                 if (formData.subapi) document.getElementById('subapi').value = formData.subapi;
                 if (formData.subconfig) document.getElementById('subconfig').value = formData.subconfig;
                 if (formData.snippetUuid && document.getElementById('snippetUuid')) {
@@ -2133,6 +2141,18 @@ async function subHtml(request, hostLength = hosts.length) {
                     document.getElementById('globalSocks5').dispatchEvent(new Event('change'));
                 }
                 
+                // 设置全局HTTP选项
+                if (formData.globalHttp !== undefined) {
+                    document.getElementById('globalHttp').checked = formData.globalHttp;
+                    // 手动触发change事件更新样式
+                    document.getElementById('globalHttp').dispatchEvent(new Event('change'));
+                }
+                
+                // 恢复section折叠/展开状态
+                if (formData.sectionStates) {
+                    applySectionStates(formData.sectionStates);
+                }
+
                 // 设置高级参数选项
                 if (formData.enableEd !== undefined && document.getElementById('enableEd')) {
                     document.getElementById('enableEd').checked = formData.enableEd;
@@ -2156,7 +2176,7 @@ async function subHtml(request, hostLength = hosts.length) {
         
         // 设置表单字段的自动保存事件监听器
         function setupAutoSave() {
-            const fields = ['ips', 'subGenerator', 'proxyHost', 'proxyip', 'socks5', 'subapi', 'subconfig', 'snippetUuid'];
+            const fields = ['ips', 'subGenerator', 'proxyHost', 'proxyip', 'socks5', 'http', 'subapi', 'subconfig', 'snippetUuid'];
             
             // 为文本输入字段添加事件监听
             fields.forEach(fieldId => {
@@ -2234,6 +2254,11 @@ async function subHtml(request, hostLength = hosts.length) {
                 globalSocks5Checkbox.addEventListener('change', saveFormData);
             }
             
+            const globalHttpCheckbox = document.getElementById('globalHttp');
+            if (globalHttpCheckbox) {
+                globalHttpCheckbox.addEventListener('change', saveFormData);
+            }
+            
             // 为高级参数复选框添加事件监听
             const enableEdCheckbox = document.getElementById('enableEd');
             if (enableEdCheckbox) {
@@ -2252,6 +2277,7 @@ async function subHtml(request, hostLength = hosts.length) {
             const proxyHost = document.getElementById('proxyHost').value.trim();
             const proxyip = document.getElementById('proxyip').value.trim();
             const socks5 = document.getElementById('socks5').value.trim();
+            const http = document.getElementById('http').value.trim();
             const subapi = document.getElementById('subapi').value.trim();
             const subconfig = document.getElementById('subconfig').value.trim();
             const hostLength = ${hostLength};
@@ -2279,9 +2305,10 @@ async function subHtml(request, hostLength = hosts.length) {
             // 保存当前表单数据
             saveFormData();
             
-            // 获取当前域名
+            // 获取当前域名和协议
             const currentDomain = window.location.host;
-            let url = \`https://\${currentDomain}/sub\`;
+            const currentProtocol = window.location.protocol || 'https:'; // 获取当前协议 (http: 或 https:)
+            let url = \`\${currentProtocol}//\${currentDomain}/sub\`;
             
             const params = new URLSearchParams();
             
@@ -2326,6 +2353,28 @@ async function subHtml(request, hostLength = hosts.length) {
                 // 检查是否启用全局Socks5
                 const globalSocks5 = document.getElementById('globalSocks5').checked;
                 if (globalSocks5) {
+                    params.append('global', 'true');
+                }
+            } else if (proxyMode === 'http') {
+                // 处理HTTP代理模式
+                const http = document.getElementById('http').value.trim();
+                if (!http) {
+                    alert('⚠️ 选择HTTP代理模式时，HTTP代理地址不能为空！\\n\\n请输入HTTP代理地址或切换到ProxyIP模式。');
+                    return;
+                }
+                
+                // 智能处理并验证HTTP格式（复用socks5的处理函数）
+                const processedHttp = processSocks5(http);
+                if (!processedHttp) {
+                    alert('⚠️ HTTP代理格式不正确！\\n\\n请检查输入格式，例如：\\n• user:password@127.0.0.1:8080\\n• 127.0.0.1:8080');
+                    return;
+                }
+                
+                params.append('http', processedHttp);
+                
+                // 检查是否启用全局HTTP代理
+                const globalHttp = document.getElementById('globalHttp').checked;
+                if (globalHttp) {
                     params.append('global', 'true');
                 }
             } else {
@@ -2375,6 +2424,18 @@ async function subHtml(request, hostLength = hosts.length) {
                 params.append('scv', 'true');
             }
             
+            // 检查是否选择了 ymyuuu 源码，如果是则添加 xhttp=true 参数
+            // 检查是否选择了 ca110us 源码，如果是则添加 trojan=true 参数
+            const isSnippetsTab = activeTab && activeTab.id === 'snippets-tab';
+            if (isSnippetsTab) {
+                const selectedSource = getSelectedSnippetSource();
+                if (selectedSource === 'my') {
+                    params.append('xhttp', 'true');
+                } else if (selectedSource === 'ca110us') {
+                    params.append('trojan', 'true');
+                }
+            }
+            
             // 组合最终URL
             const queryString = params.toString();
             if (queryString) {
@@ -2387,6 +2448,8 @@ async function subHtml(request, hostLength = hosts.length) {
             const qrContainer = document.getElementById('qr-container');
             const shortUrlBtn = document.getElementById('generateShortUrl');
             
+            // 存储原始URL到全局变量
+            cpurl = url;
             resultUrl.textContent = url;
             resultSection.style.display = 'block';
             
@@ -2414,7 +2477,8 @@ async function subHtml(request, hostLength = hosts.length) {
                 shortUrlBtn.style.transform = '';
             }, 200);
             
-            const subscriptionLink = document.getElementById('subscriptionLink').textContent;
+            // 使用存储的cpurl而不是页面文本
+            const subscriptionLink = cpurl;
             const subscriptionLinkElement = document.getElementById('subscriptionLink');
             
             // 显示加载状态
@@ -2435,6 +2499,8 @@ async function subHtml(request, hostLength = hosts.length) {
             .then(data => {
                 console.log("短链接响应:", data);
                 if (data.Code === 1 && data.ShortUrl) {
+                    // 更新cpurl为短链接
+                    cpurl = data.ShortUrl;
                     subscriptionLinkElement.textContent = data.ShortUrl;
                     // 使用原有样式更新二维码
                     generateQRCode(data.ShortUrl);
@@ -2459,7 +2525,12 @@ async function subHtml(request, hostLength = hosts.length) {
             if (document.getElementById(elementIdOrText)) {
                 // 如果是元素ID
                 element = document.getElementById(elementIdOrText);
-                url = element.textContent;
+                // 如果是订阅链接，使用存储的cpurl而不是页面文本
+                if (elementIdOrText === 'subscriptionLink' && cpurl) {
+                    url = cpurl;
+                } else {
+                    url = element.textContent;
+                }
             } else {
                 // 如果是直接的文本
                 url = elementIdOrText;
@@ -2520,7 +2591,12 @@ async function subHtml(request, hostLength = hosts.length) {
             
             setTimeout(() => {
                 element.className = originalClass;
-                element.textContent = originalText;
+                // 如果是订阅链接元素，恢复时使用最新的cpurl，否则使用原始文本
+                if (element.id === 'subscriptionLink' && cpurl) {
+                    element.textContent = cpurl;
+                } else {
+                    element.textContent = originalText;
+                }
             }, 2000);
         }
         
@@ -2567,10 +2643,47 @@ async function subHtml(request, hostLength = hosts.length) {
             }
         }
         
+        // 获取所有可折叠section的状态
+        function getSectionStates() {
+            const states = {};
+            const sections = document.querySelectorAll('.section.collapsible');
+            sections.forEach((section, index) => {
+                const titleElement = section.querySelector('.section-title');
+                if (titleElement) {
+                    const title = titleElement.textContent.trim();
+                    states[title] = !section.classList.contains('collapsed');
+                }
+            });
+            return states;
+        }
+
+        // 应用section状态
+        function applySectionStates(states) {
+            if (!states) return;
+            
+            const sections = document.querySelectorAll('.section.collapsible');
+            sections.forEach((section, index) => {
+                const titleElement = section.querySelector('.section-title');
+                if (titleElement) {
+                    const title = titleElement.textContent.trim();
+                    if (states.hasOwnProperty(title)) {
+                        const shouldBeExpanded = states[title];
+                        if (shouldBeExpanded) {
+                            section.classList.remove('collapsed');
+                        } else {
+                            section.classList.add('collapsed');
+                        }
+                    }
+                }
+            });
+        }
+
         // 折叠功能
         function toggleSection(element) {
             const section = element.parentElement;
             section.classList.toggle('collapsed');
+            // 状态改变后保存到缓存
+            saveFormData();
         }
         
         // 选项卡切换函数
@@ -2586,15 +2699,42 @@ async function subHtml(request, hostLength = hosts.length) {
             // 检查ed选项的可用性
             checkEdOptionAvailability();
             
+            // 检查HTTP代理选项的可用性
+            checkHttpProxyAvailability(tabName);
+            
             // 保存当前选项卡状态到缓存
             saveFormData();
+        }
+        
+        // 检查HTTP代理选项的可用性
+        function checkHttpProxyAvailability(currentTab) {
+            const httpRadio = document.querySelector('input[name="proxyMode"][value="http"]');
+            const httpRadioOption = httpRadio.closest('.radio-option');
+            const currentProxyMode = document.querySelector('input[name="proxyMode"]:checked').value;
+            
+            if (currentTab === 'snippets') {
+                // Snippets模式：启用HTTP代理选项
+                httpRadio.disabled = false;
+                httpRadioOption.classList.remove('disabled');
+            } else {
+                // 其他模式：禁用HTTP代理选项
+                httpRadio.disabled = true;
+                httpRadioOption.classList.add('disabled');
+                
+                // 如果当前选择的是HTTP代理，自动切换到ProxyIP模式
+                if (currentProxyMode === 'http') {
+                    const proxyipRadio = document.querySelector('input[name="proxyMode"][value="proxyip"]');
+                    proxyipRadio.checked = true;
+                    toggleProxyMode();
+                }
+            }
         }
         
         // 加载Worker代码
         async function loadWorkerCode() {
             try {
-                const currentDomain = window.location.host;
-                const response = await fetch(\`https://\${currentDomain}/proxy_host.js\`);
+                const workerJsUrl = GITHUB_PROXY + 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/proxy_host/_worker.js';
+                const response = await fetch(workerJsUrl);
                 if (!response.ok) {
                     throw new Error('获取代码失败');
                 }
@@ -2692,12 +2832,20 @@ async function subHtml(request, hostLength = hosts.length) {
         }
 
         let snippetCodeCache = '';
+        
+        // GitHub代理配置
+        const GITHUB_PROXY = 'https://github.cmliussss.net/';
+        
+        // 存储当前订阅URL
+        let cpurl = '';
 
         // 源码URL映射
         const snippetUrlMap = {
             'v': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/v.js',
             't12': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/t12.js', 
-            't13': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/t13.js'
+            't13': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/t13.js',
+            'my': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/my.js',
+            'ca110us': 'https://raw.githubusercontent.com/cmliu/CF-Workers-BPSUB/main/snippet/ca110us.js'
         };
 
         // 获取当前选中的源码类型
@@ -2712,7 +2860,7 @@ async function subHtml(request, hostLength = hosts.length) {
             const snippetJsUrl = snippetUrlMap[sourceType];
             
             try {
-                const response = await fetch(snippetJsUrl);
+                const response = await fetch(GITHUB_PROXY + snippetJsUrl);
                 if (!response.ok) {
                     throw new Error('获取代码失败');
                 }
@@ -2771,11 +2919,39 @@ async function subHtml(request, hostLength = hosts.length) {
             
             if (snippetCodeCache) {
                 const uuid = uuidInput.value.trim();
+                let processedUuid = uuid;
+                
+                // 检查当前选择的源码类型
+                const selectedSource = getSelectedSnippetSource();
+                
+                // 如果选择的是ca110us源码且UUID不为空，则进行sha224处理
+                if (selectedSource === 'ca110us' && uuid !== '') {
+                    try {
+                        // 使用sha224函数处理UUID
+                        if (typeof window.sha224 !== 'undefined') {
+                            processedUuid = window.sha224(uuid);
+                            console.log('🎯 使用 window.sha224 处理UUID');
+                            console.log('📝 原始UUID:', uuid);
+                            console.log('🔐 SHA-224结果:', processedUuid);
+                        } else if (typeof sha224 !== 'undefined') {
+                            processedUuid = sha224(uuid);
+                            console.log('🎯 使用 sha224 处理UUID');
+                            console.log('📝 原始UUID:', uuid);
+                            console.log('🔐 SHA-224结果:', processedUuid);
+                        } else {
+                            console.warn('⚠️ SHA224函数未加载，跳过验证');
+                        }
+                    } catch (error) {
+                        console.error('❌ SHA224处理失败:', error);
+                        processedUuid = ''; // 失败时跳过验证
+                    }
+                }
+                
                 let updatedCode = snippetCodeCache;
                 
                 // 替换第一行的 FIXED_UUID 值
                 const firstLine = "const FIXED_UUID = '';";
-                const newFirstLine = \`const FIXED_UUID = '\${uuid}';\`;
+                const newFirstLine = \`const FIXED_UUID = '\${processedUuid}';\`;
                 updatedCode = updatedCode.replace(firstLine, newFirstLine);
                 
                 snippetCodeElement.value = updatedCode;
@@ -2961,6 +3137,7 @@ async function subHtml(request, hostLength = hosts.length) {
             const proxyMode = document.querySelector('input[name="proxyMode"]:checked').value;
             const proxyipGroup = document.getElementById('proxyip-group');
             const socks5Group = document.getElementById('socks5-group');
+            const httpGroup = document.getElementById('http-group');
             
             // 更新单选框样式
             document.querySelectorAll('input[name="proxyMode"]').forEach(radio => {
@@ -2976,9 +3153,15 @@ async function subHtml(request, hostLength = hosts.length) {
             if (proxyMode === 'socks5') {
                 proxyipGroup.style.display = 'none';
                 socks5Group.style.display = 'block';
+                httpGroup.style.display = 'none';
+            } else if (proxyMode === 'http') {
+                proxyipGroup.style.display = 'none';
+                socks5Group.style.display = 'none';
+                httpGroup.style.display = 'block';
             } else {
                 proxyipGroup.style.display = 'block';
                 socks5Group.style.display = 'none';
+                httpGroup.style.display = 'none';
             }
         }
         
@@ -3173,6 +3356,11 @@ async function subHtml(request, hostLength = hosts.length) {
             
             // 初始化ed选项可用性检查
             checkEdOptionAvailability();
+            
+            // 初始化HTTP代理选项可用性检查
+            const activeTab = document.querySelector('.tab-button.active');
+            const currentTab = activeTab ? activeTab.id.replace('-tab', '') : 'workers';
+            checkHttpProxyAvailability(currentTab);
             
             // 初始化复选框事件监听
             const globalSocks5Checkbox = document.getElementById('globalSocks5');

@@ -1,4 +1,4 @@
-const FIXED_UUID = '';
+const FIXED_UUID = '';// 天书12
 //1. 天书版12.0重构版队列传输模式改，本版再次改变传输逻辑，大幅度提升传输稳定性，建议pages部署，这版是全功能开发者研究版，不适合小白部署
 import { connect } from 'cloudflare:sockets';
 //////////////////////////////////////////////////////////////////////////配置区块////////////////////////////////////////////////////////////////////////
@@ -20,9 +20,10 @@ export default {
             const url = new URL(访问请求.url);
             我的SOCKS5账号 = url.searchParams.get('socks5') || url.searchParams.get('http');
             启用SOCKS5全局反代 = url.searchParams.has('globalproxy');
-            if (url.pathname.toLowerCase().includes('/socks5=')) {
-                我的SOCKS5账号 = url.pathname.split('/socks5=')[1];
+            if (url.pathname.toLowerCase().includes('/socks5=') || (url.pathname.includes('/s5=')) || (url.pathname.includes('/gs5='))) {
+                我的SOCKS5账号 = url.pathname.split('5=')[1];
                 启用SOCKS5反代 = 'socks5';
+                启用SOCKS5全局反代 = url.pathname.includes('/gs5=') ? true : 启用SOCKS5全局反代;
             } else if (url.pathname.toLowerCase().includes('/http=')) {
                 我的SOCKS5账号 = url.pathname.split('/http=')[1];
                 启用SOCKS5反代 = 'http';
@@ -39,9 +40,9 @@ export default {
                 启用SOCKS5全局反代 = true;//开启全局SOCKS5
             }
 
-            if (我的SOCKS5账号 && 获取SOCKS5账号(我的SOCKS5账号)) {
+            if (我的SOCKS5账号) {
                 try {
-                    我的SOCKS5账号 = 我的SOCKS5账号;
+                    获取SOCKS5账号(我的SOCKS5账号);
                     启用SOCKS5反代 = url.searchParams.get('http') ? 'http' : 启用SOCKS5反代;
                 } catch (err) {
                     启用SOCKS5反代 = null;
@@ -151,7 +152,7 @@ async function 解析VL标头(二进制数据, WS接口, TCP接口) {
         if (FIXED_UUID && 验证VL的密钥(二进制数据.slice(1, 17)) !== FIXED_UUID) throw new Error('UUID验证失败');
         if (启用SOCKS5反代 == 'socks5' && 启用SOCKS5全局反代) {
             TCP接口 = await 创建SOCKS5接口(识别地址类型, 访问地址, 访问端口);
-        } if (启用SOCKS5反代 == 'http' && 启用SOCKS5全局反代) {
+        } else if (启用SOCKS5反代 == 'http' && 启用SOCKS5全局反代) {
             TCP接口 = await httpConnect(访问地址, 访问端口);
         } else {
             try {
